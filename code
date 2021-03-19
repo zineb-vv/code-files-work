@@ -1,0 +1,319 @@
+#include <Arduino.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+
+void AppendFile(fs::FS &fs, const char *path, const char *message)
+{
+  Serial.printf("Writing file: %s\n", path);
+
+  File file = fs.open(path, FILE_APPEND);
+
+  if (!file)
+  {
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  if (file.print(message))
+  {
+
+    Serial.println("File written");
+  }
+  else
+  {
+    Serial.println("Write failed");
+  }
+
+  file.close();
+}
+void INTappendFile(fs::FS &fs, const char *path, int o)
+{
+  Serial.printf("Writing file: %s\n", path);
+
+  File file = fs.open(path, FILE_APPEND);
+
+  if (!file)
+  {
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  if (file.print(o))
+  {
+
+    Serial.println("File written");
+  }
+  else
+  {
+    Serial.println("Write failed");
+  }
+
+  file.close();
+}
+
+int zineb(fs::FS &fs, const char *path)
+{
+
+  File file = fs.open(path);
+  static uint8_t buf[512];
+  size_t len = 0;
+  uint32_t start = millis();
+  uint32_t end = start;
+  if (file)
+  {
+    len = file.size();
+    size_t flen = len;
+    start = millis();
+    while (len)
+    {
+      size_t toRead = len;
+      if (toRead > 512)
+      {
+        toRead = 512;
+      }
+      file.read(buf, toRead);
+      len -= toRead;
+    }
+    end = millis() - start;
+    Serial.printf("%u bytes read for %u ms\n", flen, end);
+    return flen;
+    file.close();
+  }
+  else
+  {
+    Serial.println("Failed to open file for reading");
+  }
+
+  file.close();
+}
+
+void deleteFile(fs::FS &fs, const char *path)
+{
+  Serial.printf("Deleting file: %s\n", path);
+  if (fs.remove(path))
+  {
+    fs.remove(path);
+    Serial.println("File deleted");
+  }
+  else
+  {
+    Serial.println("Delete failed");
+  }
+}
+
+void pointReadingFile(fs::FS &fs, const char *path, size_t frameSize)
+{
+
+  Serial.printf("Reading file: %s\n", path);
+
+  File file = fs.open(path);
+
+  if (!file)
+  {
+    Serial.println("Failed to open file for reading");
+  }
+
+  char _rx_buffer[200];
+  file.readBytes((char *)_rx_buffer, frameSize);
+
+  Serial.print("Read from file: ");
+  while (file.available())
+  {
+    /*affiche ce qu'on a ecrit*/ //file.read();
+
+    Serial.write(file.read());
+  }
+  file.close();
+}
+
+void pointReadingFileUntil(fs::FS &fs, const char *path, size_t frameSize, char terminator)
+{
+
+  Serial.printf("Reading file: %s\n", path);
+
+  File file = fs.open(path);
+
+  if (!file)
+  {
+    Serial.println("Failed to open file for reading");
+  }
+
+  char _rx_buffer[200];
+
+  file.readBytesUntil(terminator, (char *)_rx_buffer, frameSize);
+
+  Serial.print("Read from file: ");
+  while (file.available())
+  {
+
+    Serial.write(file.read());
+  }
+  file.close();
+}
+
+char readFile(fs::FS &fs, const char *path)
+{
+  Serial.printf("Reading file: %s\n", path);
+
+  File file = fs.open(path);
+
+  if (!file)
+  {
+    Serial.println("Failed to open file for reading");
+  }
+
+  Serial.print("Read from file: ");
+
+  while (file.available())
+  {
+    // Something left to read
+    char c = file.read();
+    Serial.println("C:");
+    Serial.print(c);
+    return c; // Get the next character
+
+    // /*affiche ce qu'on a ecrit*/ //Serial.write(file.read());
+    // /*affiche ce qu'on a ecrit*/ Serial.println(file.read());
+    //size_t d=size_t (file.read());
+    //                             Serial.print("d: ");Serial.println(d);
+    //return d;
+  }
+
+  file.close();
+}
+
+void setup()
+{
+
+  Serial.begin(9600);
+  while (!Serial)
+  {
+    ;
+  }
+
+  if (!SD.begin(5))
+  {
+    Serial.println("Card Mount Failed");
+    return;
+  }
+  File myFile = SD.open("ee.txt", FILE_WRITE); /*extern reaaading*/
+
+  deleteFile(SD, "/e.txt");
+  deleteFile(SD, "/ee.txt");
+
+  //writeFile(SD, "/z.txt", "");
+  //writeFile(SD, "/zinn.txt", "");
+
+  AppendFile(SD, "/e.txt", "[{zainab}]"); //10
+  //testFileIO(SD, "/p.txt");
+
+  int p = zineb(SD, "/e.txt"); /*calcule bytes de fichier*/
+
+  Serial.println(p);
+
+  INTappendFile(SD, "/ee.txt", p);
+  AppendFile(SD, "/ee.txt", ";");
+
+  AppendFile(SD, "/e.txt", "[{aicha}]"); //19
+  p = zineb(SD, "/e.txt");               /*calcule bytes de file "e"*/
+  Serial.println(p);
+
+  INTappendFile(SD, "/ee.txt", p);
+  AppendFile(SD, "/ee.txt", ";");
+
+  AppendFile(SD, "/e.txt", "[{hafsa}]"); //28
+
+  p = zineb(SD, "/e.txt"); /*calcule bytes*/
+  Serial.println(p);
+  INTappendFile(SD, "/ee.txt", p);
+  AppendFile(SD, "/ee.txt", ";");
+
+  /*reading sequance*/
+  myFile = SD.open("/ee.txt");
+  String y;
+  if (myFile)
+  {
+    Serial.println("NEWDATA.txt:");
+
+    for (int i = 0; i < myFile.size(); i++)
+    {
+
+      char c = myFile.read();
+      y += c;
+    }
+  }
+  int L;
+
+  String byte1;
+  String byte2;
+  String tableau[300];
+  Serial.print(y);
+  Serial.println("myFile.size()is:");
+  Serial.println(myFile.size());
+  L = 0;
+  int position = -1;
+
+  for (int j = 0; j < myFile.size(); j++)
+  {
+    if (y[j] == ';')
+    {
+      L = L + 1;
+      tableau[L] = y.substring(position + 1, j );
+      
+      Serial.println( y.substring(position + 1, j ));
+      position = j;
+    }
+  }
+
+  Serial.println("L is:");
+  Serial.println(L);
+
+  // for(int i=1;i<L;i++)
+  // {
+
+  //   tableau[i]= y.indexOf(',', tableau[i-1] + 1);
+  // Serial.println(tableau[i]);
+
+  //   String byte1 = y.substring(0, tableau[1]);
+  //  String byte2 = y.substring(tableau[1] +1, tableau[2]);
+  //  Serial.println(byte1);
+  //   Serial.println(byte2);
+
+
+File vmyFile;
+  vmyFile = SD.open("/e.txt");
+  String T;
+  if (vmyFile)
+  {
+    Serial.println("NEWDATA.txt:");
+
+    for (int i = 0; i < vmyFile.size(); i++)
+    {
+
+      char C = vmyFile.read();
+      T += C;
+
+    }
+  }
+  tableau[0]='0';
+  //Serial.println(T);
+  for (int j = 0; j < L; j++)
+  {
+    
+      
+      //tableau[L] = T.substring(position + 1, j );
+      int r1=tableau[j].toInt();
+      int r2=tableau[j+1].toInt();
+      Serial.println( T.substring( r1,r2));
+      position = j;
+    
+  }
+//   String g= T.substring(0,3);
+// Serial.print(g);
+}
+
+void loop()
+{
+  // put your main code here, to run repeatedly:
+}
