@@ -232,6 +232,8 @@ void setup()
   /*reading sequance*/
   myFile = SD.open("/ee.txt");
   String y;
+
+  /*calculer combien de point virgule*/
   if (myFile)
   {
     Serial.println("NEWDATA.txt:");
@@ -247,7 +249,8 @@ void setup()
 
   String byte1;
   String byte2;
-  String tableau[300];
+  String tableau[300];  /* creation de tableaaau pour lees index pour savoir recuperer les donner dans une variable bien coonnu substring*/
+  
   Serial.print(y);
   Serial.println("myFile.size()is:");
   Serial.println(myFile.size());
@@ -293,10 +296,11 @@ File vmyFile;
 
       char C = vmyFile.read();
       T += C;
-
+    /*T is byte by bytes */
     }
   }
   tableau[0]='0';
+  String h;
   //Serial.println(T);
   for (int j = 0; j < L; j++)
   {
@@ -305,9 +309,11 @@ File vmyFile;
       //tableau[L] = T.substring(position + 1, j );
       int r1=tableau[j].toInt();
       int r2=tableau[j+1].toInt();
-      Serial.println( T.substring( r1,r2));
+      h= T.substring(r1, r2);
+      Serial.println("h de j est:");
+      
       position = j;
-    
+    Serial.print(h);/*h is point by point */
   }
 //   String g= T.substring(0,3);
 // Serial.print(g);
@@ -317,3 +323,4 @@ void loop()
 {
   // put your main code here, to run repeatedly:
 }
+
